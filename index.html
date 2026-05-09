@@ -188,6 +188,12 @@
     border-color: var(--warn);
     font-weight: 600;
   }
+  .size-chip.active {
+    background: #f472b6;
+    color: #0a0e14;
+    border-color: #f472b6;
+    font-weight: 600;
+  }
 
   /* KPI Grid */
   .kpi-grid {
@@ -517,7 +523,7 @@ function normalizeJobType(t) {
    DATA
    ========================================================= */
 let DATA = [];
-let FILTER = { type: 'all', month: 'all', search: '' };
+let FILTER = { type: 'all', month: 'all', size: 'all', search: '' };
 
 async function loadData(force=false) {
   const cached = !force && localStorage.getItem(CACHE_KEY);
@@ -578,6 +584,7 @@ function getFiltered() {
   return DATA.filter(d => {
     if (FILTER.type !== 'all' && d.jobType !== FILTER.type) return false;
     if (FILTER.month !== 'all' && d.month !== FILTER.month) return false;
+    if (FILTER.size !== 'all' && d.size !== Number(FILTER.size)) return false;
     if (FILTER.search) {
       const q = FILTER.search.toLowerCase();
       const hay = (d.customer + ' ' + d.jobName + ' ' + d.jobType + ' ' + d.month).toLowerCase();
@@ -747,6 +754,17 @@ function render() {
           <div class="card-title">รายการงานทั้งหมด</div>
           <div class="card-sub">${count} รายการ</div>
         </div>
+        ${FILTER.type === 'หม้อแปลง' ? (() => {
+          const sizes = [...new Set(DATA.filter(d=>d.jobType==='หม้อแปลง').map(d=>d.size))].sort((a,b)=>a-b);
+          const unit = DATA.find(d=>d.jobType==='หม้อแปลง')?.unit || 'kVA';
+          return `<div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <span style="font-size:11px; color:var(--text-2); white-space:nowrap;">ขนาด:</span>
+            <div class="filters" id="sizeFilters" style="gap:6px;">
+              <button class="chip size-chip ${FILTER.size==='all'?'active':''}" data-size="all" style="padding:5px 10px; font-size:12px;">ทั้งหมด</button>
+              ${sizes.map(sz=>`<button class="chip size-chip ${FILTER.size==sz?'active':''}" data-size="${sz}" style="padding:5px 10px; font-size:12px;">${fmtNum(sz)} ${unit}</button>`).join('')}
+            </div>
+          </div>`;
+        })() : ''}
       </div>
       <div class="table-wrap">
         ${count === 0 ? '<div class="empty">ไม่พบข้อมูลตามตัวกรอง</div>' :
@@ -792,12 +810,19 @@ function render() {
   document.querySelectorAll('#typeFilters .chip').forEach(b => {
     b.addEventListener('click', () => {
       FILTER.type = b.dataset.type;
+      FILTER.size = 'all'; // reset size when switching type
       render();
     });
   });
   document.querySelectorAll('#monthFilters .chip').forEach(b => {
     b.addEventListener('click', () => {
       FILTER.month = b.dataset.month;
+      render();
+    });
+  });
+  document.querySelectorAll('#sizeFilters .size-chip').forEach(b => {
+    b.addEventListener('click', () => {
+      FILTER.size = b.dataset.size;
       render();
     });
   });
