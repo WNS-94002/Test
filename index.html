@@ -182,6 +182,12 @@
     border-color: var(--accent);
     font-weight: 600;
   }
+  .month-chip.active {
+    background: var(--warn);
+    color: #0a0e14;
+    border-color: var(--warn);
+    font-weight: 600;
+  }
 
   /* KPI Grid */
   .kpi-grid {
@@ -511,7 +517,7 @@ function normalizeJobType(t) {
    DATA
    ========================================================= */
 let DATA = [];
-let FILTER = { type: 'all', search: '' };
+let FILTER = { type: 'all', month: 'all', search: '' };
 
 async function loadData(force=false) {
   const cached = !force && localStorage.getItem(CACHE_KEY);
@@ -571,6 +577,7 @@ async function fetchFresh() {
 function getFiltered() {
   return DATA.filter(d => {
     if (FILTER.type !== 'all' && d.jobType !== FILTER.type) return false;
+    if (FILTER.month !== 'all' && d.month !== FILTER.month) return false;
     if (FILTER.search) {
       const q = FILTER.search.toLowerCase();
       const hay = (d.customer + ' ' + d.jobName + ' ' + d.jobType + ' ' + d.month).toLowerCase();
@@ -596,6 +603,7 @@ const fmtNum = (n) => Math.round(n).toLocaleString('en-US');
    ========================================================= */
 function render() {
   const types = ['all', ...Array.from(new Set(DATA.map(d=>d.jobType)))];
+  const availableMonths = MONTH_ORDER.filter(m => DATA.some(d => d.month === m));
   const f = getFiltered();
 
   // KPIs
@@ -619,6 +627,18 @@ function render() {
         <div class="filters" id="typeFilters">
           ${types.map(t => `<button class="chip ${FILTER.type===t?'active':''}" data-type="${t}">${t==='all'?'ทั้งหมด':t}</button>`).join('')}
         </div>
+      </div>
+    </div>
+
+    <!-- Month filter bar -->
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
+      <span style="font-size:12px; color:var(--text-2); letter-spacing:0.5px; text-transform:uppercase; white-space:nowrap; display:flex; align-items:center; gap:6px;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        เดือน
+      </span>
+      <div class="filters" id="monthFilters">
+        <button class="chip ${FILTER.month==='all'?'active':''}" data-month="all">ทุกเดือน</button>
+        ${availableMonths.map(m => `<button class="chip month-chip ${FILTER.month===m?'active':''}" data-month="${m}">${m}</button>`).join('')}
       </div>
     </div>
 
@@ -755,6 +775,12 @@ function render() {
   document.querySelectorAll('#typeFilters .chip').forEach(b => {
     b.addEventListener('click', () => {
       FILTER.type = b.dataset.type;
+      render();
+    });
+  });
+  document.querySelectorAll('#monthFilters .chip').forEach(b => {
+    b.addEventListener('click', () => {
+      FILTER.month = b.dataset.month;
       render();
     });
   });
