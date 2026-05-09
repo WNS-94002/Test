@@ -723,6 +723,23 @@ function render() {
       </div>
     </div>
 
+    <!-- Transformer size chart (shown only when filter = หม้อแปลง) -->
+    ${FILTER.type === 'หม้อแปลง' ? `
+    <div class="card" style="margin-top:0;">
+      <div class="card-head">
+        <div>
+          <div class="card-title">จำนวนหม้อแปลงแต่ละขนาด รายเดือน</div>
+          <div class="card-sub">นับจำนวนเครื่องติดตั้ง · แยกตาม kVA</div>
+        </div>
+        <span style="font-size:11px; color:var(--text-2); background:rgba(94,234,212,0.08); border:1px solid rgba(94,234,212,0.2); padding:4px 10px; border-radius:999px;">
+          รวม ${f.length} เครื่อง
+        </span>
+      </div>
+      <div class="chart-wrap" style="height:300px;"><canvas id="chTransformerSize"></canvas></div>
+      <div class="legend" id="legendTransformerSize"></div>
+    </div>
+    ` : ''}
+
     <!-- Row 3: table -->
     <div class="card" style="margin-top:16px;">
       <div class="card-head">
@@ -988,6 +1005,56 @@ function drawCharts(f) {
       }
     }
   });
+
+  // ===== TRANSFORMER SIZE PER MONTH (stacked bar, count) =====
+  if (FILTER.type === 'หม้อแปลง' && document.getElementById('chTransformerSize')) {
+    const sizes = [...new Set(f.map(d => d.size))].sort((a,b) => a-b);
+    const unit = f.length ? f[0].unit : 'kVA';
+    const sizePalette = ['#5eead4','#2dd4bf','#14b8a6','#0d9488','#0f766e','#115e59','#134e4a'];
+    const sizeDatasets = sizes.map((sz, i) => ({
+      label: `${fmtNum(sz)} ${unit}`,
+      data: labels.map(m => f.filter(d => d.month === m && d.size === sz).length),
+      backgroundColor: sizePalette[i % sizePalette.length],
+      borderRadius: 5,
+      borderSkipped: false,
+      barPercentage: 0.65,
+      categoryPercentage: 0.7
+    }));
+    charts.transformerSize = new Chart(document.getElementById('chTransformerSize'), {
+      type: 'bar',
+      data: { labels, datasets: sizeDatasets },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        scales: {
+          x: { stacked: true, grid: { display: false }, ticks: { color: '#7d8590' } },
+          y: {
+            stacked: true, grid,
+            ticks: { color: '#7d8590', stepSize: 1, precision: 0 },
+            beginAtZero: true,
+            title: { display: true, text: 'จำนวนเครื่อง (ตัว)', color: '#555f6d', font: { size: 11 } }
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            ...tooltip,
+            callbacks: {
+              label: ctx => `${ctx.dataset.label}: ${ctx.raw} เครื่อง`,
+              footer: items => 'รวม: ' + items.reduce((s,i)=>s+i.raw,0) + ' เครื่อง'
+            }
+          }
+        }
+      }
+    });
+    document.getElementById('legendTransformerSize').innerHTML = sizes.map((sz, i) => {
+      const total = f.filter(d => d.size === sz).length;
+      return `<span class="legend-item">
+        <span class="legend-dot" style="background:${sizePalette[i % sizePalette.length]}"></span>
+        ${fmtNum(sz)} ${unit}
+        <span style="color:var(--text-3); margin-left:4px;">${total} เครื่อง</span>
+      </span>`;
+    }).join('');
+  }
 }
 
 /* =========================================================
