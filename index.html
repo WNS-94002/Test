@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Business Dashboard - ธุรกิจเสริม</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg-0: #0a0e14;
+    --bg-1: #0f1419;
+    --bg-2: #151b23;
+    --bg-3: #1c242e;
+    --border: #232b36;
+    --border-2: #2d3744;
+    --text-0: #e6edf3;
+    --text-1: #b1bac4;
+    --text-2: #7d8590;
+    --text-3: #555f6d;
+    --accent: #5eead4;
+    --accent-2: #38bdf8;
+    --accent-3: #a78bfa;
+    --warn: #fbbf24;
+    --danger: #f87171;
+    --success: #4ade80;
+    --grad-1: linear-gradient(135deg, #5eead4 0%, #38bdf8 100%);
+    --grad-2: linear-gradient(135deg, #a78bfa 0%, #f472b6 100%);
+    --grad-3: linear-gradient(135deg, #fbbf24 0%, #fb923c 100%);
+    --shadow-glow: 0 0 0 1px rgba(94, 234, 212, 0.1), 0 8px 32px rgba(0,0,0,0.4);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg-0);
+    color: var(--text-0);
+    font-family: 'IBM Plex Sans Thai', system-ui, sans-serif;
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+
+  body {
+    background:
+      radial-gradient(circle at 15% 0%, rgba(94, 234, 212, 0.08) 0%, transparent 40%),
+      radial-gradient(circle at 85% 100%, rgba(167, 139, 250, 0.06) 0%, transparent 40%),
+      var(--bg-0);
+  }
+
+  .mono { font-family: 'JetBrains Mono', monospace; }
+
+  /* Top Bar */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    backdrop-filter: blur(12px);
+    background: rgba(10, 14, 20, 0.8);
+    border-bottom: 1px solid var(--border);
+  }
+  .topbar-inner {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .brand-mark {
+    width: 36px; height: 36px;
+    border-radius: 9px;
+    background: var(--grad-1);
+    display: grid;
+    place-items: center;
+    color: #0a0e14;
+    font-weight: 700;
+    font-size: 18px;
+    box-shadow: 0 4px 16px rgba(94,234,212,0.3);
+  }
+  .brand-text { line-height: 1.2; }
+  .brand-title { font-size: 15px; font-weight: 600; letter-spacing: 0.2px; }
+  .brand-sub { font-size: 11px; color: var(--text-2); letter-spacing: 0.5px; text-transform: uppercase; }
+
+  .top-actions { display: flex; align-items: center; gap: 12px; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text-1);
+  }
+  .badge-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--success);
+    box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.2);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    color: var(--text-0);
+    font-family: inherit;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn:hover { background: var(--bg-3); border-color: var(--border-2); }
+  .btn-primary {
+    background: var(--grad-1);
+    color: #0a0e14;
+    border: none;
+    font-weight: 600;
+  }
+  .btn-primary:hover { opacity: 0.92; }
+
+  /* Container */
+  .container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 28px 32px 64px;
+  }
+
+  /* Page Header */
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 28px;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .page-title {
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: -0.4px;
+  }
+  .page-sub {
+    color: var(--text-2);
+    font-size: 14px;
+    margin-top: 4px;
+  }
+
+  /* Filter */
+  .filters {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .chip {
+    padding: 7px 14px;
+    border-radius: 8px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    color: var(--text-1);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .chip:hover { border-color: var(--border-2); color: var(--text-0); }
+  .chip.active {
+    background: var(--accent);
+    color: #0a0e14;
+    border-color: var(--accent);
+    font-weight: 600;
+  }
+
+  /* KPI Grid */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  @media (max-width: 1024px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px) { .kpi-grid { grid-template-columns: 1fr; } }
+
+  .kpi {
+    background: linear-gradient(180deg, var(--bg-2) 0%, var(--bg-1) 100%);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s;
+  }
+  .kpi:hover { border-color: var(--border-2); transform: translateY(-2px); }
+  .kpi::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--kpi-color, var(--accent));
+    opacity: 0.7;
+  }
+  .kpi-label {
+    font-size: 12px;
+    color: var(--text-2);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .kpi-icon {
+    width: 26px; height: 26px;
+    border-radius: 7px;
+    background: rgba(255,255,255,0.04);
+    display: grid;
+    place-items: center;
+    color: var(--kpi-color, var(--accent));
+  }
+  .kpi-value {
+    font-size: 30px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    line-height: 1.1;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .kpi-foot {
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--text-2);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .delta {
+    color: var(--success);
+    font-weight: 600;
+  }
+
+  /* Card grid */
+  .grid {
+    display: grid;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  .grid-3-2 { grid-template-columns: 2fr 1fr; }
+  .grid-2-1-1 { grid-template-columns: 2fr 1fr 1fr; }
+  .grid-2 { grid-template-columns: 1fr 1fr; }
+  @media (max-width: 1100px) {
+    .grid-3-2, .grid-2-1-1, .grid-2 { grid-template-columns: 1fr; }
+  }
+
+  .card {
+    background: var(--bg-1);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+  }
+  .card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 18px;
+    gap: 12px;
+  }
+  .card-title {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.1px;
+  }
+  .card-sub {
+    font-size: 12px;
+    color: var(--text-2);
+    margin-top: 2px;
+  }
+  .card-action {
+    font-size: 12px;
+    color: var(--text-2);
+    cursor: pointer;
+  }
+  .card-action:hover { color: var(--text-0); }
+
+  .chart-wrap { position: relative; height: 280px; }
+  .chart-wrap-sm { position: relative; height: 220px; }
+
+  /* Legend chip */
+  .legend {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+  }
+  .legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-1);
+  }
+  .legend-dot {
+    width: 8px; height: 8px;
+    border-radius: 2px;
+  }
+
+  /* Table */
+  .table-wrap {
+    overflow-x: auto;
+    margin: -4px;
+    padding: 4px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  thead th {
+    text-align: left;
+    padding: 10px 12px;
+    font-weight: 500;
+    color: var(--text-2);
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.6px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-2);
+    position: sticky;
+    top: 0;
+  }
+  tbody td {
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-1);
+    vertical-align: middle;
+  }
+  tbody tr:hover td { background: rgba(255,255,255,0.015); color: var(--text-0); }
+  td.num { font-family: 'JetBrains Mono', monospace; text-align: right; color: var(--text-0); }
+
+  .tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+  }
+  .tag-transformer { background: rgba(94, 234, 212, 0.12); color: #5eead4; border: 1px solid rgba(94, 234, 212, 0.25); }
+  .tag-solar { background: rgba(251, 191, 36, 0.12); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.25); }
+  .tag-y3 { background: rgba(167, 139, 250, 0.12); color: #a78bfa; border: 1px solid rgba(167, 139, 250, 0.25); }
+  .tag-default { background: rgba(125, 133, 144, 0.12); color: var(--text-1); border: 1px solid var(--border); }
+
+  /* Loading */
+  .loading {
+    display: grid;
+    place-items: center;
+    height: 60vh;
+    color: var(--text-2);
+    gap: 14px;
+  }
+  .spinner {
+    width: 32px; height: 32px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .err {
+    background: rgba(248, 113, 113, 0.08);
+    border: 1px solid rgba(248, 113, 113, 0.3);
+    color: #fca5a5;
+    padding: 16px;
+    border-radius: 10px;
+    margin-bottom: 16px;
+  }
+
+  /* Search */
+  .search {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    transition: border-color 0.15s;
+  }
+  .search:focus-within { border-color: var(--accent); }
+  .search input {
+    background: none;
+    border: none;
+    color: var(--text-0);
+    font-family: inherit;
+    font-size: 13px;
+    outline: none;
+    width: 180px;
+  }
+  .search input::placeholder { color: var(--text-3); }
+
+  /* Empty */
+  .empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-2);
+    font-size: 13px;
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="brand-mark">B</div>
+      <div class="brand-text">
+        <div class="brand-title">Business Dashboard</div>
+        <div class="brand-sub">ธุรกิจเสริม · Sales Overview</div>
+      </div>
+    </div>
+    <div class="top-actions">
+      <span class="badge"><span class="badge-dot"></span><span id="liveStatus">Live</span></span>
+      <button class="btn" onclick="loadData(true)" title="Refresh">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>
+        Refresh
+      </button>
+      <button class="btn btn-primary" onclick="exportCSV()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export
+      </button>
+    </div>
+  </div>
+</header>
+
+<div id="content" class="container">
+  <div class="loading">
+    <div class="spinner"></div>
+    <div>กำลังโหลดข้อมูลจาก Google Sheet…</div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   CONFIG
+   ========================================================= */
+const SHEET_ID  = '1moYsztqgPaooE1kNxAMwJu0KU69CHPoEF_qMtliYSio';
+const SHEET_GID = '0';
+const CSV_URL   = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${SHEET_GID}`;
+const CACHE_KEY = 'biz_dashboard_v1';
+
+const MONTH_ORDER = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+
+const COLORS = {
+  'หม้อแปลง':   '#5eead4',
+  'โซล่าเซลล์': '#fbbf24',
+  'Y3':         '#a78bfa',
+  'อื่น ๆ':     '#7d8590'
+};
+
+/* =========================================================
+   CSV PARSE
+   ========================================================= */
+function parseCSV(text) {
+  const rows = [];
+  let row = [], cur = '', inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQ) {
+      if (c === '"' && text[i+1] === '"') { cur += '"'; i++; }
+      else if (c === '"') inQ = false;
+      else cur += c;
+    } else {
+      if (c === '"') inQ = true;
+      else if (c === ',') { row.push(cur); cur = ''; }
+      else if (c === '\n') { row.push(cur); rows.push(row); row = []; cur = ''; }
+      else if (c === '\r') {}
+      else cur += c;
+    }
+  }
+  if (cur.length || row.length) { row.push(cur); rows.push(row); }
+  return rows;
+}
+
+function toNum(s) {
+  if (!s) return 0;
+  const n = parseFloat(String(s).replace(/[,\s฿]/g, ''));
+  return isNaN(n) ? 0 : n;
+}
+
+function normalizeJobType(t) {
+  const s = (t || '').trim();
+  if (!s) return 'อื่น ๆ';
+  if (s.includes('หม้อแปลง')) return 'หม้อแปลง';
+  if (s.includes('โซล่า') || s.toLowerCase().includes('solar')) return 'โซล่าเซลล์';
+  if (s.toUpperCase() === 'Y3') return 'Y3';
+  return s;
+}
+
+/* =========================================================
+   DATA
+   ========================================================= */
+let DATA = [];
+let FILTER = { type: 'all', search: '' };
+
+async function loadData(force=false) {
+  const cached = !force && localStorage.getItem(CACHE_KEY);
+  if (cached) {
+    try {
+      DATA = JSON.parse(cached);
+      render();
+      // refresh in background
+      setTimeout(() => fetchFresh(), 100);
+      return;
+    } catch(e) {}
+  }
+  await fetchFresh();
+}
+
+async function fetchFresh() {
+  try {
+    document.getElementById('liveStatus').textContent = 'Syncing…';
+    const res = await fetch(CSV_URL);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const text = await res.text();
+    const rows = parseCSV(text);
+    if (rows.length < 2) throw new Error('No data');
+    const data = [];
+    for (let i = 1; i < rows.length; i++) {
+      const r = rows[i];
+      if (!r[0] || !r[2]) continue; // skip blank
+      data.push({
+        month:    (r[0]||'').trim(),
+        year:     (r[1]||'').trim(),
+        customer: (r[2]||'').trim(),
+        jobName:  (r[3]||'').trim(),
+        jobType:  normalizeJobType(r[4]),
+        size:     toNum(r[5]),
+        unit:     (r[6]||'').trim(),
+        value:    toNum(r[7])
+      });
+    }
+    DATA = data;
+    localStorage.setItem(CACHE_KEY, JSON.stringify(DATA));
+    document.getElementById('liveStatus').textContent = 'Live';
+    render();
+  } catch(e) {
+    console.error(e);
+    document.getElementById('liveStatus').textContent = 'Offline';
+    if (!DATA.length) {
+      document.getElementById('content').innerHTML =
+        `<div class="err">โหลดข้อมูลไม่สำเร็จ: ${e.message}<br>
+         ตรวจสอบว่า Google Sheet ตั้งค่าให้ "ทุกคนที่มีลิงก์สามารถดู" แล้ว</div>`;
+    }
+  }
+}
+
+/* =========================================================
+   FILTERED DATA
+   ========================================================= */
+function getFiltered() {
+  return DATA.filter(d => {
+    if (FILTER.type !== 'all' && d.jobType !== FILTER.type) return false;
+    if (FILTER.search) {
+      const q = FILTER.search.toLowerCase();
+      const hay = (d.customer + ' ' + d.jobName + ' ' + d.jobType + ' ' + d.month).toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+/* =========================================================
+   FORMAT
+   ========================================================= */
+const fmtTHB = (n) => '฿' + Math.round(n).toLocaleString('en-US');
+const fmtTHBshort = (n) => {
+  if (n >= 1e6) return '฿' + (n/1e6).toFixed(2).replace(/\.?0+$/,'') + 'M';
+  if (n >= 1e3) return '฿' + (n/1e3).toFixed(1).replace(/\.?0+$/,'') + 'K';
+  return '฿' + n;
+};
+const fmtNum = (n) => Math.round(n).toLocaleString('en-US');
+
+/* =========================================================
+   RENDER
+   ========================================================= */
+function render() {
+  const types = ['all', ...Array.from(new Set(DATA.map(d=>d.jobType)))];
+  const f = getFiltered();
+
+  // KPIs
+  const total = f.reduce((s,d)=>s+d.value, 0);
+  const count = f.length;
+  const customers = new Set(f.map(d=>d.customer)).size;
+  const avg = count ? total/count : 0;
+  const months = new Set(f.map(d=>d.month + d.year)).size;
+
+  document.getElementById('content').innerHTML = `
+    <div class="page-header">
+      <div>
+        <div class="page-title">ภาพรวมยอดขาย</div>
+        <div class="page-sub">ข้อมูลล่าสุด · ${count} รายการ · ${months} เดือน · อัปเดตจาก Google Sheet โดยตรง</div>
+      </div>
+      <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+        <div class="search">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="text" id="searchInput" placeholder="ค้นหาลูกค้า / งาน…" value="${FILTER.search.replace(/"/g,'&quot;')}">
+        </div>
+        <div class="filters" id="typeFilters">
+          ${types.map(t => `<button class="chip ${FILTER.type===t?'active':''}" data-type="${t}">${t==='all'?'ทั้งหมด':t}</button>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <!-- KPI -->
+    <div class="kpi-grid">
+      <div class="kpi" style="--kpi-color:#5eead4">
+        <div class="kpi-label">
+          <span class="kpi-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
+          มูลค่ารวม
+        </div>
+        <div class="kpi-value">${fmtTHBshort(total)}</div>
+        <div class="kpi-foot">${fmtTHB(total)}</div>
+      </div>
+      <div class="kpi" style="--kpi-color:#38bdf8">
+        <div class="kpi-label">
+          <span class="kpi-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11H5a2 2 0 0 0-2 2v7h18v-7a2 2 0 0 0-2-2h-4"/><rect x="9" y="3" width="6" height="11"/></svg></span>
+          จำนวนงาน
+        </div>
+        <div class="kpi-value">${fmtNum(count)}</div>
+        <div class="kpi-foot">${customers} ลูกค้าที่ไม่ซ้ำ</div>
+      </div>
+      <div class="kpi" style="--kpi-color:#a78bfa">
+        <div class="kpi-label">
+          <span class="kpi-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 14 4-4 4 4 5-5"/></svg></span>
+          มูลค่าเฉลี่ย/งาน
+        </div>
+        <div class="kpi-value">${fmtTHBshort(avg)}</div>
+        <div class="kpi-foot">เฉลี่ยจากงานที่กรอง</div>
+      </div>
+      <div class="kpi" style="--kpi-color:#fbbf24">
+        <div class="kpi-label">
+          <span class="kpi-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+          ช่วงเวลา
+        </div>
+        <div class="kpi-value">${months} เดือน</div>
+        <div class="kpi-foot">${getMonthRange(f)}</div>
+      </div>
+    </div>
+
+    <!-- Row 1: monthly + donut -->
+    <div class="grid grid-3-2">
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <div class="card-title">มูลค่างานรายเดือน</div>
+            <div class="card-sub">แยกตามประเภทงาน</div>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="chMonthly"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <div class="card-title">สัดส่วนประเภทงาน</div>
+            <div class="card-sub">% มูลค่ารวม</div>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="chType"></canvas></div>
+        <div class="legend" id="legendType"></div>
+      </div>
+    </div>
+
+    <!-- Row 2: top customers + jobs count -->
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <div class="card-title">ลูกค้า Top มูลค่า</div>
+            <div class="card-sub">เรียงจากยอดสูงสุด</div>
+          </div>
+        </div>
+        <div class="chart-wrap-sm"><canvas id="chCustomers"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <div class="card-title">จำนวนงานต่อเดือน</div>
+            <div class="card-sub">นับชิ้นงาน</div>
+          </div>
+        </div>
+        <div class="chart-wrap-sm"><canvas id="chCount"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Row 3: table -->
+    <div class="card" style="margin-top:16px;">
+      <div class="card-head">
+        <div>
+          <div class="card-title">รายการงานทั้งหมด</div>
+          <div class="card-sub">${count} รายการ</div>
+        </div>
+      </div>
+      <div class="table-wrap">
+        ${count === 0 ? '<div class="empty">ไม่พบข้อมูลตามตัวกรอง</div>' :
+        `<table>
+          <thead>
+            <tr>
+              <th>เดือน / ปี</th>
+              <th>ลูกค้า</th>
+              <th>ชื่องาน</th>
+              <th>ประเภท</th>
+              <th style="text-align:right">ขนาด</th>
+              <th style="text-align:right">มูลค่า</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${[...f].sort((a,b) => b.value - a.value).map(d => `
+              <tr>
+                <td>${d.month} <span style="color:var(--text-3)">${d.year}</span></td>
+                <td><strong style="color:var(--text-0)">${escapeHTML(d.customer)}</strong></td>
+                <td>${escapeHTML(d.jobName)}</td>
+                <td><span class="tag ${tagClass(d.jobType)}">${escapeHTML(d.jobType)}</span></td>
+                <td class="num">${fmtNum(d.size)} <span style="color:var(--text-3); font-family:inherit; font-size:11px;">${escapeHTML(d.unit)}</span></td>
+                <td class="num">${fmtTHB(d.value)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>`}
+      </div>
+    </div>
+  `;
+
+  // re-bind input (keep focus on subsequent renders)
+  const si = document.getElementById('searchInput');
+  if (si) {
+    si.addEventListener('input', e => {
+      FILTER.search = e.target.value;
+      const pos = e.target.selectionStart;
+      render();
+      const nu = document.getElementById('searchInput');
+      if (nu) { nu.focus(); nu.setSelectionRange(pos, pos); }
+    });
+  }
+  document.querySelectorAll('#typeFilters .chip').forEach(b => {
+    b.addEventListener('click', () => {
+      FILTER.type = b.dataset.type;
+      render();
+    });
+  });
+
+  drawCharts(f);
+}
+
+function getMonthRange(arr) {
+  if (!arr.length) return '—';
+  const ms = arr.map(d => d.month).filter(Boolean);
+  const seen = new Set(ms);
+  const ordered = MONTH_ORDER.filter(m => seen.has(m));
+  if (!ordered.length) return Array.from(seen).join(', ');
+  if (ordered.length === 1) return ordered[0];
+  return `${ordered[0]} – ${ordered[ordered.length-1]}`;
+}
+
+function escapeHTML(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function tagClass(t) {
+  if (t === 'หม้อแปลง') return 'tag-transformer';
+  if (t === 'โซล่าเซลล์') return 'tag-solar';
+  if (t === 'Y3') return 'tag-y3';
+  return 'tag-default';
+}
+
+/* =========================================================
+   CHARTS
+   ========================================================= */
+let charts = {};
+
+function drawCharts(f) {
+  Object.values(charts).forEach(c => c?.destroy());
+  charts = {};
+
+  Chart.defaults.font.family = "'IBM Plex Sans Thai', sans-serif";
+  Chart.defaults.font.size = 11;
+  Chart.defaults.color = '#7d8590';
+
+  const tooltip = {
+    backgroundColor: '#0f1419',
+    titleColor: '#e6edf3',
+    bodyColor: '#b1bac4',
+    borderColor: '#2d3744',
+    borderWidth: 1,
+    padding: 12,
+    cornerRadius: 8,
+    boxPadding: 6,
+    titleFont: { weight: 600, size: 12 },
+    bodyFont: { size: 12 }
+  };
+
+  const grid = { color: 'rgba(255,255,255,0.04)', drawBorder: false };
+
+  // ===== MONTHLY STACKED BAR =====
+  const monthsSet = new Set(f.map(d => d.month));
+  const labels = MONTH_ORDER.filter(m => monthsSet.has(m));
+  const types = Array.from(new Set(f.map(d => d.jobType)));
+  const datasets = types.map(t => ({
+    label: t,
+    data: labels.map(m => f.filter(d => d.month === m && d.jobType === t).reduce((s,d)=>s+d.value, 0)),
+    backgroundColor: COLORS[t] || '#7d8590',
+    borderRadius: 6,
+    borderSkipped: false,
+    barPercentage: 0.7,
+    categoryPercentage: 0.7
+  }));
+
+  charts.monthly = new Chart(document.getElementById('chMonthly'), {
+    type: 'bar',
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        x: { stacked: true, grid: { display: false }, ticks: { color: '#7d8590' } },
+        y: { stacked: true, grid, ticks: { color: '#7d8590', callback: v => fmtTHBshort(v) } }
+      },
+      plugins: {
+        legend: {
+          position: 'top', align: 'end',
+          labels: { boxWidth: 8, boxHeight: 8, color: '#b1bac4', usePointStyle: true, pointStyle: 'rectRounded' }
+        },
+        tooltip: {
+          ...tooltip,
+          callbacks: {
+            label: ctx => `${ctx.dataset.label}: ${fmtTHB(ctx.raw)}`,
+            footer: items => 'รวม: ' + fmtTHB(items.reduce((s,i)=>s+i.raw, 0))
+          }
+        }
+      }
+    }
+  });
+
+  // ===== TYPE DONUT =====
+  const typeAgg = {};
+  f.forEach(d => { typeAgg[d.jobType] = (typeAgg[d.jobType]||0) + d.value; });
+  const tLabels = Object.keys(typeAgg);
+  const tValues = tLabels.map(k => typeAgg[k]);
+  const tColors = tLabels.map(k => COLORS[k] || '#7d8590');
+  const tTotal = tValues.reduce((s,v)=>s+v, 0);
+
+  charts.type = new Chart(document.getElementById('chType'), {
+    type: 'doughnut',
+    data: {
+      labels: tLabels,
+      datasets: [{
+        data: tValues,
+        backgroundColor: tColors,
+        borderColor: '#0f1419',
+        borderWidth: 3,
+        hoverOffset: 8
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      cutout: '65%',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          ...tooltip,
+          callbacks: {
+            label: ctx => `${ctx.label}: ${fmtTHB(ctx.raw)} (${(ctx.raw/tTotal*100).toFixed(1)}%)`
+          }
+        }
+      }
+    }
+  });
+  document.getElementById('legendType').innerHTML = tLabels.map((l,i) => `
+    <span class="legend-item">
+      <span class="legend-dot" style="background:${tColors[i]}"></span>
+      ${escapeHTML(l)} <span style="color:var(--text-3); margin-left:4px;">${(tValues[i]/tTotal*100).toFixed(0)}%</span>
+    </span>
+  `).join('');
+
+  // ===== TOP CUSTOMERS HBAR =====
+  const custAgg = {};
+  f.forEach(d => { custAgg[d.customer] = (custAgg[d.customer]||0) + d.value; });
+  const cSorted = Object.entries(custAgg).sort((a,b)=>b[1]-a[1]).slice(0, 7);
+  charts.cust = new Chart(document.getElementById('chCustomers'), {
+    type: 'bar',
+    data: {
+      labels: cSorted.map(x=>'ลูกค้า ' + x[0]),
+      datasets: [{
+        data: cSorted.map(x=>x[1]),
+        backgroundColor: cSorted.map((_,i) => i===0 ? '#5eead4' : 'rgba(94, 234, 212, 0.55)'),
+        borderRadius: 4,
+        borderSkipped: false
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        x: { grid, ticks: { color: '#7d8590', callback: v => fmtTHBshort(v) } },
+        y: { grid: { display: false }, ticks: { color: '#b1bac4' } }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          ...tooltip,
+          callbacks: { label: ctx => fmtTHB(ctx.raw) }
+        }
+      }
+    }
+  });
+
+  // ===== JOB COUNT PER MONTH (LINE) =====
+  const cntPerMonth = labels.map(m => f.filter(d => d.month === m).length);
+  charts.count = new Chart(document.getElementById('chCount'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'จำนวนงาน',
+        data: cntPerMonth,
+        borderColor: '#a78bfa',
+        backgroundColor: (ctx) => {
+          const c = ctx.chart.ctx;
+          const g = c.createLinearGradient(0, 0, 0, 220);
+          g.addColorStop(0, 'rgba(167,139,250,0.35)');
+          g.addColorStop(1, 'rgba(167,139,250,0)');
+          return g;
+        },
+        fill: true,
+        tension: 0.35,
+        pointBackgroundColor: '#a78bfa',
+        pointBorderColor: '#0f1419',
+        pointBorderWidth: 2,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        borderWidth: 2.5
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#7d8590' } },
+        y: { grid, ticks: { color: '#7d8590', stepSize: 1, precision: 0 }, beginAtZero: true }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: { ...tooltip, callbacks: { label: ctx => `${ctx.raw} งาน` } }
+      }
+    }
+  });
+}
+
+/* =========================================================
+   EXPORT
+   ========================================================= */
+function exportCSV() {
+  const f = getFiltered();
+  const headers = ['เดือน','ปี','ลูกค้า','ชื่องาน','ประเภท','ขนาด','หน่วย','มูลค่า'];
+  const lines = [headers.join(',')];
+  f.forEach(d => {
+    lines.push([d.month, d.year, d.customer, d.jobName, d.jobType, d.size, d.unit, d.value]
+      .map(x => `"${String(x).replace(/"/g,'""')}"`).join(','));
+  });
+  const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `business_dashboard_${Date.now()}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* INIT */
+loadData();
+</script>
+</body>
+</html>
